@@ -23,23 +23,24 @@ def scrape(url):
     soup = BeautifulSoup(plain_text, "html.parser", parse_only=strainer_paragraphs)
     links = []
 
-    for link in soup.find_all('a'):
-        t = link.get('title')
-        l = link.get('href')
+    for a_tag in soup.find_all('a'):
+        a_title = a_tag.get('title')
+        href = a_tag.get('href')
 
-        if link.parent.name == 'p':
+        if a_tag.parent.name == 'p':
             # filter out links w/o title
-            if t is not None:
+            if a_title is not None:
                 # filter out external links
-                if l[0:5] == '/wiki':
-                    links.append(l)
+                if href[0:5] == '/wiki':
+                    links.append(href)
                 else:
-                    print("external: " + l)
+                    print("external: " + href)
             else:
                 print("no title")
         else:
             print("non <p> parent")
     return(title, links)
+
 
 result = scrape("https://en.wikipedia.org/wiki/1948_Arab%E2%80%93Israeli_War")
 print(result[0])
