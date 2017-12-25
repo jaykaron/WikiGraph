@@ -64,6 +64,7 @@ source_code = requests.get(url)
 plain_text = source_code.text
 soup = BeautifulSoup(plain_text, "html.parser")
 
+soup = soup.find(id="content")
 
 for link in soup.find_all('a'):
     t = link.get('title')
@@ -81,5 +82,4 @@ for link in soup.find_all('a'):
                         if link.parent.parent.get('class') != bad_grandparents:
                             titles.append(t)
                             links.append(l)
-
 print(len(links))
