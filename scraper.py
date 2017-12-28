@@ -13,7 +13,7 @@ from bs4 import SoupStrainer
 import time
 
 
-def scrape(url_end):
+def scrape(url_end, title_only=False):
     url_complete = 'https://en.wikipedia.org' + url_end
 
     # avoid getting blocked by a website by sending too many requests
@@ -29,10 +29,12 @@ def scrape(url_end):
     strainer_title = SoupStrainer(id="firstHeading")
     title = BeautifulSoup(plain_text, "html.parser", parse_only=strainer_title).get_text()
 
+    if title_only:
+        return (title, [])
+
     strainer_paragraphs = SoupStrainer('p')
     soup = BeautifulSoup(plain_text, "html.parser", parse_only=strainer_paragraphs)
     links = set()
-    # temp_titles = []
 
     for link in soup.find_all('a'):
         t = link.get('title')
@@ -43,11 +45,11 @@ def scrape(url_end):
             if t is not None:
                 # filter out external links
                 if l[0:5] == '/wiki':
-                    links.add(l)
-                    # temp_titles.append(t)
                     hash_loc = l.find('#')
                     if hash_loc != -1:
                         l = l[0:hash_loc]
+
+                    links.add(l)
                 else:
                     pass
                     # print("external: " + l)
@@ -57,9 +59,10 @@ def scrape(url_end):
         else:
             pass
             # print("non <p> parent")
-    return(title, links)
+
+    return(title, list(links))
 
 
-# result = scrape("/wiki/1948_Arab%E2%80%93Israeli_War")
+result = scrape("/wiki/Science")
 # print(result[0])
-# print(len(result[1]))
+print(len(result[1]))
