@@ -61,8 +61,3 @@ def scrape(url_end, title_only=False):
             # print("non <p> parent")
 
     return(title, list(links))
-
-
-result = scrape("/wiki/Science")
-# print(result[0])
-print(len(result[1]))

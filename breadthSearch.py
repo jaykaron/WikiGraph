@@ -48,18 +48,28 @@ def add_links(root, tx):
     return N
 
 
+def add_title(node, tx):
+    url = node.values()[0]
+    title = scrape(url, title_only=True)[0]
+    SET_NAME = 'match (n:Page {url:"' + url + '"}) set n.title = "'+ title +'"'
+    if tx.closed():
+        tx = session.begin_transaction()
+    tx.run(SET_NAME)
+    tx.commit()
+
+
+
 def breadthGraph(root, target_depth, tx):
     N = add_links(root, tx)
+    NOT_CRAWLED = "match (n:Page {crawled:'False'}) return n.url"
 
     current_depth = 1
     while current_depth < target_depth:
         current_depth +=1
-        print(current_depth)
         # get the links of all the nodes where crawled='False'
         tx = session.begin_transaction()
 
         to_crawl = ['','']
-        NOT_CRAWLED = "match (n:Page {crawled:'False'}) return n.url"
         to_crawl = tx.run(NOT_CRAWLED)
 
         for node in to_crawl:
@@ -68,11 +78,18 @@ def breadthGraph(root, target_depth, tx):
             #     tx = session.begin_transaction()
             N += add_links(new_url, tx)
 
+    if tx.closed():
+        tx = session.begin_transaction()
+    to_crawl = ['','']
+    to_crawl = tx.run(NOT_CRAWLED)
+
+    for node in to_crawl:
+        add_title(node, tx)
 
     delta_t = (time.time() - t1)/3600.0
     print(str(N)+' Nodes were crawled in '+str(delta_t)+' hours')
 
 
 # define root url
-root = '/wiki/Science'
-breadthGraph(root, 3, tx)
+# root = '/wiki/1963_Championnat_National_1_Final'
+# breadthGraph(root, 2, tx)
