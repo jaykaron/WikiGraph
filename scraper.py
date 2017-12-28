@@ -60,4 +60,8 @@ def scrape(url_end, title_only=False):
             pass
             # print("non <p> parent")
 
+    # remove references to itself
+    links -= {url_end}
+
+    # return links as a list
     return(title, list(links))
