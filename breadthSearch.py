@@ -34,9 +34,9 @@ def add_links(root, tx):
     # add first level link nodes
     MERGE_LINKS = """WITH """+str(links)+""" AS links
                      UNWIND links as l
-                     MERGE (n:Page {url:'"""+root+"""'})
-                     """+'SET n.title="'+title+'",n.crawled="True"'+"""
-                     MERGE (m:Page {url:l})
+                     MERGE (n:Page {title:'"""+title+"""'})
+                     """+'SET n.crawled="True"'+"""
+                     MERGE (m:Page {title:l})
                      ON CREATE SET m.crawled = 'False'
                      merge (n)-[r:Linked]->(m);"""
     if tx.closed():
@@ -78,18 +78,18 @@ def breadthGraph(root, target_depth, tx):
             #     tx = session.begin_transaction()
             N += add_links(new_url, tx)
 
-    if tx.closed():
-        tx = session.begin_transaction()
-    to_crawl = ['','']
-    to_crawl = tx.run(NOT_CRAWLED)
+    #if tx.closed():
+    #    tx = session.begin_transaction()
+    #to_crawl = ['','']
+    #to_crawl = tx.run(NOT_CRAWLED)
 
-    for node in to_crawl:
-        add_title(node, tx)
+    # for node in to_crawl:
+    #    add_title(node, tx)
 
     delta_t = (time.time() - t1)/3600.0
     print(str(N)+' Nodes were crawled in '+str(delta_t)+' hours')
 
 
 # define root url
-# root = '/wiki/1963_Championnat_National_1_Final'
-# breadthGraph(root, 2, tx)
+root = '/wiki/1963_Championnat_National_1_Final'
+breadthGraph(root, 2, tx)
