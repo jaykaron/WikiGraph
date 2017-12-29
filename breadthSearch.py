@@ -6,7 +6,7 @@
 
 # wiki graph main
 from neo4j.v1 import GraphDatabase
-from scraper import scrape
+from scraper import scrape, get_url_title
 import time
 
 t1 = time.time()
@@ -20,21 +20,14 @@ tx = session.begin_transaction()
 
 
 
-def add_links(root, tx):
-# call scraper
-    result = scrape(root)
-
-    title = result[0]
-    links = result[1]
-
-    # remove links to itself
-    if root in links:
-        links.remove(root)
+def add_links(root_title, tx):
+    # call scraper
+    links = scrape(root_title)
 
     # add first level link nodes
     MERGE_LINKS = """WITH """+str(links)+""" AS links
                      UNWIND links as l
-                     MERGE (n:Page {title:'"""+title+"""'})
+                     MERGE (n:Page {title:'"""+root_title+"""'})
                      """+'SET n.crawled="True"'+"""
                      MERGE (m:Page {title:l})
                      ON CREATE SET m.crawled = 'False'
@@ -59,9 +52,11 @@ def add_title(node, tx):
 
 
 
-def breadthGraph(root, target_depth, tx):
-    N = add_links(root, tx)
-    NOT_CRAWLED = "match (n:Page {crawled:'False'}) return n.url"
+def breadthGraph(root_url, target_depth, tx):
+    root_title = get_url_title(root_url)
+
+    N = add_links(root_title, tx)
+    NOT_CRAWLED = "match (n:Page {crawled:'False'}) return n.title"
 
     current_depth = 1
     while current_depth < target_depth:
@@ -73,18 +68,8 @@ def breadthGraph(root, target_depth, tx):
         to_crawl = tx.run(NOT_CRAWLED)
 
         for node in to_crawl:
-            new_url = node.values()[0]
-            # if tx.closed():
-            #     tx = session.begin_transaction()
-            N += add_links(new_url, tx)
-
-    #if tx.closed():
-    #    tx = session.begin_transaction()
-    #to_crawl = ['','']
-    #to_crawl = tx.run(NOT_CRAWLED)
-
-    # for node in to_crawl:
-    #    add_title(node, tx)
+            node_title= node.values()[0]
+            N += add_links(node_title, tx)
 
     delta_t = (time.time() - t1)/3600.0
     print(str(N)+' Nodes were crawled in '+str(delta_t)+' hours')

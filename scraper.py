@@ -12,40 +12,42 @@ from bs4 import BeautifulSoup
 from bs4 import SoupStrainer
 import time
 
-plain_texts = {}
+soup_archive = {}
+title_archive = {}
 
-def scrape(url_end, title_only=False):
+def get_url_title(url_end):
+    if url_end in title_archive.keys():
+        return title_archive[url_end]
+
+    # get website
     url_complete = 'https://en.wikipedia.org' + url_end
+    source_code = ''
+    while source_code == '':
+        try:
+            source_code = requests.get(url_complete)
+        except:
+            time.sleep(5)
+    plain_text = source_code.text
 
-    soup = ""
+    # get title
+    title_start = plain_text.find('<h1 id="firstHeading" class="firstHeading" lang="en">')
+    title_start += len('<h1 id="firstHeading" class="firstHeading" lang="en">')
+    title_end = plain_text[title_start:].find("</h1>")
+    title = plain_text[title_start : title_start + title_end]
 
-    if url_end not in plain_texts.keys():
-        # print("getting " + url_end)
-        # avoid getting blocked by a website by sending too many requests
-        source_code = ''
-        while source_code == '':
-            try:
-                source_code = requests.get(url_complete)
-            except:
-                time.sleep(5)
+    # save title
+    title_archive[url_end] = title
 
-        plain_text = source_code.text
+    # save soup
+    strainer_paragraphs = SoupStrainer('p')
+    soup = BeautifulSoup(plain_text, "html.parser", parse_only=strainer_paragraphs)
+    soup_archive[title] = soup
 
-        title_start = plain_text.find('<h1 id="firstHeading" class="firstHeading" lang="en">')
-        title_start += len('<h1 id="firstHeading" class="firstHeading" lang="en">')
-        title_end = plain_text[title_start:].find("</h1>")
-        title = plain_text[title_start : title_start + title_end]
+    return title
 
-        strainer_paragraphs = SoupStrainer('p')
-        soup = BeautifulSoup(plain_text, "html.parser", parse_only=strainer_paragraphs)
-        plain_texts[url_end] = (title, soup)
-    else:
-        old = plain_texts[url_end]
-        title = old[0]
-        soup = old[1]
+def scrape(title):
 
-    if title_only:
-        return (title, [])
+    soup = soup_archive[title]
 
     links = set()
     for link in soup.find_all('a'):
@@ -60,9 +62,8 @@ def scrape(url_end, title_only=False):
                     hash_loc = l.find('#')
                     if hash_loc != -1:
                         l = l[0:hash_loc]
-                    l_title=scrape(l, title_only=True)[0]
+                    l_title = get_url_title(l)
                     links.add(l_title)
-                    # links.add(l)
                 else:
                     pass
                     # print("external: " + l)
@@ -74,7 +75,7 @@ def scrape(url_end, title_only=False):
             # print("non <p> parent")
 
     # remove references to itself
-    links -= {url_end}
+    links -= {title}
 
     # return links as a list
-    return(title, list(links))
+    return(list(links))
