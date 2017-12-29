@@ -35,6 +35,12 @@ def get_url_title(url_end):
     title_end = plain_text[title_start:].find("</h1>")
     title = plain_text[title_start : title_start + title_end]
 
+    # remove tags from title (wiki forbids using '<' and '>' in titles)
+    while '<' in title:
+        open_loc = title.find('<')
+        close_loc = title.find('>')
+        title = title[:open_loc] + title[close_loc + 1:]
+
     # save title
     title_archive[url_end] = title
 
