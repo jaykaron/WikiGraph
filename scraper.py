@@ -41,6 +41,9 @@ def get_url_title(url_end):
         close_loc = title.find('>')
         title = title[:open_loc] + title[close_loc + 1:]
 
+    # escape single quotes "'" from title
+    title = escape_single_quotes(title)
+
     # save title
     title_archive[url_end] = title
 
@@ -85,3 +88,16 @@ def scrape(title):
 
     # return links as a list
     return(list(links))
+
+
+def escape_single_quotes(title):
+    """ a recursive method to replace single quotes (') with escaped ones (\')"""
+
+    loc = title.find("'")
+
+    # base case, no quotes
+    if loc == -1:
+        return title
+
+    # recursive, replace with \' and recurse on end of string
+    return title[0:loc] + "\\'" + escape_single_quotes(title[loc + 1:])
