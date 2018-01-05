@@ -41,9 +41,6 @@ def get_url_title(url_end):
         close_loc = title.find('>')
         title = title[:open_loc] + title[close_loc + 1:]
 
-    # escape single quotes "'" from title
-    title = escape_single_quotes(title)
-
     # save title
     title_archive[url_end] = title
 

@@ -6,7 +6,7 @@
 
 # wiki graph main
 from neo4j.v1 import GraphDatabase
-from scraper import scrape, get_url_title
+from scraper import scrape, get_url_title, escape_single_quotes
 import time
 
 t1 = time.time()
@@ -24,10 +24,13 @@ def add_links(root_title, tx):
     # call scraper
     links = scrape(root_title)
 
+    # escape single quotes "'" from title
+    escaped_title = escape_single_quotes(root_title)
+
     # add first level link nodes
     MERGE_LINKS = """WITH """+str(links)+""" AS links
                      UNWIND links as l
-                     MERGE (n:Page {title:'"""+root_title+"""'})
+                     MERGE (n:Page {title:'"""+escaped_title+"""'})
                      """+'SET n.crawled="True"'+"""
                      MERGE (m:Page {title:l})
                      ON CREATE SET m.crawled = 'False'
@@ -41,6 +44,7 @@ def add_links(root_title, tx):
     return N
 
 
+# not in use currently
 def add_title(node, tx):
     url = node.values()[0]
     title = scrape(url, title_only=True)[0]
@@ -68,13 +72,39 @@ def breadthGraph(root_url, target_depth, tx):
         to_crawl = tx.run(NOT_CRAWLED)
 
         for node in to_crawl:
-            node_title= node.values()[0]
+            node_title = node.values()[0]
             N += add_links(node_title, tx)
 
     delta_t = (time.time() - t1)/3600.0
     print(str(N)+' Nodes were crawled in '+str(delta_t)+' hours')
 
 
+def add_inner_links(tx):
+    NOT_CRAWLED = "match (n:Page {crawled:'False'}) return n.title"
+
+    if tx.closed():
+        tx = session.begin_transaction()
+    to_link = tx.run(NOT_CRAWLED)
+
+    for node in to_link:
+        node_title = node.values()[0]
+
+        # escape single quotes "'" from title
+        escaped_title = escape_single_quotes(node_title)
+
+        links = scrape(node_title)
+        ADD = """WITH """+str(links)+""" AS links
+         UNWIND links as l
+         MATCH (n:Page {title:'"""+escaped_title+"""'}), (m:Page {title:l})
+         MERGE (n)-[:Linked]->(m)
+         """
+
+        if tx.closed():
+            tx = session.begin_transaction()
+        tx.run(ADD)
+        tx.commit()
+
 # define root url
-root = '/wiki/1963_Championnat_National_1_Final'
-breadthGraph(root, 2, tx)
+root = '/wiki/Science'
+breadthGraph(root, 1, tx)
+add_inner_links(tx);
