@@ -3,7 +3,7 @@
 """
 Created on Sun Dec 24 15:21:40 2017
 
-@author: joshuakaron
+@author: joshuakaron, jaykaron
 """
 
 # web crawl a wiki page
