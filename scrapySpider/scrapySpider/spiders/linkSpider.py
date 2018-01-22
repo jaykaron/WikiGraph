@@ -6,12 +6,10 @@ import time
 
 class linkSpider(scrapy.Spider):
     name = "links"
-    results_dir = "results"
+    results_dir = "/Users/jaykaron/Projects/WikiGraph/scrapedData"
     start_time = time.time()
     custom_settings = {
-        #"name": "links",
-
-        "DEPTH_LIMIT": 1,
+        "DEPTH_LIMIT": 0,
 
         # Breadth First Settings
         "DEPTH_PRIORITY": 1,
@@ -21,7 +19,7 @@ class linkSpider(scrapy.Spider):
         # Less logs, default: DEBUG
         "LOG_LEVEL": 'INFO',
 
-        #"JOBDIR":"crawls"
+        "JOBDIR":"crawls"
     }
 
     start_urls = [
@@ -38,13 +36,13 @@ class linkSpider(scrapy.Spider):
 
 
     def parse(self, response):
-        # check pageid if already done, return empty
         # change title to concat of all texts
         title_segments = response.xpath('//h1[@id="firstHeading"]//text()').extract()
         title = ""
         for seg in title_segments:
             title = title + seg
 
+        url = response.url[response.url.find("/wiki"):]
         pageid = response.xpath('//script')[1].re(r'(?<=ArticleId":)\d*')[0]
 
         # if pageid in self.visited:
@@ -92,13 +90,13 @@ class linkSpider(scrapy.Spider):
         data = {
             "title": title,
             'pageid': pageid,
-            "url": response.url,
+            "url": url,
             "links": list(good_links),
             "number_of_links": len(good_links)
         }
 
         # save file by id
-        filename = self.results_dir + '/%s.json' % pageid
+        filename = self.results_dir + '/%s.json' % url[6:]
         with open(filename, 'w') as f:
             json.dump(data, f)
 

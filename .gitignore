@@ -1,5 +1,6 @@
 testing.py
-scrapySpider/scrapySpider/results
+scrapedData/
+scrapySpider/crawls/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,3 +1,0 @@
-remove soup after scraping
-getting links from lists
-store urls on node?
