@@ -1,0 +1,10 @@
+#!/bin/bash
+
+read -p "Are you in the projects root directory (WikiGraph)? (y/n)" confirm
+if test $confirm = "y"
+then
+  cd wikiSpider/
+  scrapy crawl main
+else
+  echo "please change directory"
+fi

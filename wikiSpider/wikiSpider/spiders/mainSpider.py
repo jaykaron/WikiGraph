@@ -5,8 +5,8 @@ import time
 
 
 class linkSpider(scrapy.Spider):
-    name = "links"
-    results_dir = "/Users/jaykaron/Projects/WikiGraph/scrapedData"
+    name = "main"
+    results_dir = "../scrapedData"
     start_time = time.time()
     custom_settings = {
         "DEPTH_LIMIT": 0,
@@ -26,15 +26,6 @@ class linkSpider(scrapy.Spider):
         'https://en.wikipedia.org/wiki/V%C3%A9rtesacsa'
     ]
 
-    # visited = []
-    # try:
-    #     with open(self.results_dir + '/visited.txt', 'rb') as v_file:
-    #         visited = pickle.load(v_file)
-    # except Exception as e:
-    #     pass
-    # print("start visited: " + str(visited))
-
-
     def parse(self, response):
         # change title to concat of all texts
         title_segments = response.xpath('//h1[@id="firstHeading"]//text()').extract()
@@ -44,11 +35,6 @@ class linkSpider(scrapy.Spider):
 
         url = response.url[response.url.find("/wiki"):]
         pageid = response.xpath('//script')[1].re(r'(?<=ArticleId":)\d*')[0]
-
-        # if pageid in self.visited:
-        #     return
-        # else:
-        #    self.visited.append(pageid)
 
         all_links_in_main = response.xpath('//div[@id="mw-content-text"]//a[starts-with(@href, "/wiki")]')
 
@@ -103,11 +89,6 @@ class linkSpider(scrapy.Spider):
         for l in good_links:
             next_page = response.urljoin(l)
             yield scrapy.Request(next_page, callback=self.parse)
-
-    def closed(self, reason):
-    #     print(self.visited)
-    #     with open(self.results_dir + "/visited.txt", 'w+b') as v_file:
-    #         pickle.dump(self.visited, v_file)
 
         total_time = time.time() - self.start_time
         with open(self.results_dir + "/__stats__.txt", 'w') as f:

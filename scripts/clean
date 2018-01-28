@@ -1,0 +1,16 @@
+#!/bin/bash
+
+read -p "Are you sure you want to delete all the old files? (y/n)" confirm
+if test $confirm = "y"
+then
+  read -p "Are you in the projects root directory (WikiGraph)? (y/n)"
+  if test $confirm = "y"
+  then
+    rm -rf scrapedData/*
+    rm -rf wikiSpider/crawls/*
+  else
+    echo "please change directory"
+  fi
+else
+  echo "bye"
+fi
