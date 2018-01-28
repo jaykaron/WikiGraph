@@ -4,10 +4,11 @@ import pickle
 import time
 
 
-class linkSpider(scrapy.Spider):
+class mainSpider(scrapy.Spider):
     name = "main"
     results_dir = "../scrapedData"
     start_time = time.time()
+    NUMBER_OF_UPLOADERS = 5
     custom_settings = {
         "DEPTH_LIMIT": 0,
 
@@ -82,7 +83,8 @@ class linkSpider(scrapy.Spider):
         }
 
         # save file by id
-        filename = self.results_dir + '/%s.json' % url[6:]
+        uploader_number = title.__hash__() % self.NUMBER_OF_UPLOADERS
+        filename = self.results_dir + '/<%d>%s.json' % (uploader_number, url[6:])
         with open(filename, 'w') as f:
             json.dump(data, f)
 
