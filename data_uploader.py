@@ -8,18 +8,6 @@ uri = "bolt://localhost:7687"
 driver = GraphDatabase.driver(uri, auth=("neo4j", "Wiki"))
 session = driver.session()
 
-def escape_single_quotes(title):
-    """ a recursive method to replace single quotes (') with escaped ones (\')"""
-
-    loc = title.find("'")
-
-    # base case, no quotes
-    if loc == -1:
-        return title
-
-    # recursive, replace with \' and recurse on end of string
-    return title[0:loc] + "\\'" + escape_single_quotes(title[loc + 1:])
-
 def upload(data):
     pageid = data["pageid"]
     url = data["url"]
@@ -40,7 +28,7 @@ def upload(data):
             except Exception as e:
                 pass
 
-        root = session.run("MERGE (n:P {url:'%s'}) SET n.id = %s SET n.title = '%s' RETURN n" % (url, pageid, escape_single_quotes(title)))
+        root = session.run("MERGE (n:P {url:'%s'}) SET n.id = %s SET n.title = '%s' RETURN n" % (url, pageid, title.replace("'", "`"))
         add_links = session.run(""" OPTIONAL MATCH (root:P {id:%s})
                                 WITH root, %s AS urls
                                 UNWIND urls AS u
