@@ -1,5 +1,5 @@
 testing.py
-scrapedData/
+scrapedData*
 wikiSpider/crawls
 
 # Byte-compiled / optimized / DLL files
