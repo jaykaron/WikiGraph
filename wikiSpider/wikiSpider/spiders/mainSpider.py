@@ -82,7 +82,9 @@ class linkSpider(scrapy.Spider):
         }
 
         # save file by id
-        filename = self.results_dir + '/%s.json' % url[6:]
+        url_end = url[6:]
+        url_end = url_end.replace("/", "|")
+        filename = self.results_dir + '/%s.json' % url_end
         with open(filename, 'w') as f:
             json.dump(data, f)
 
