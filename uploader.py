@@ -3,13 +3,15 @@ from neo4j.v1 import GraphDatabase
 from multiprocessing.dummy import Pool as ThreadPool
 
 NUMBER_OF_THREADS = 5
+INTIAL_DIRECTORY = "scrapedData"
+FINAL_DIRECTORY = "uploadedData"
 
 def heaper(num_of_heaps):
     heaps = []
     for i in range(num_of_heaps):
         heaps.append([])
 
-    files = os.listdir("scrapedData/")
+    files = os.listdir(INTIAL_DIRECTORY)
     files.remove("__stats__.txt")
 
     for i in range(len(files)):
@@ -20,7 +22,7 @@ def heaper(num_of_heaps):
 def upload_many(files, nodes=True):
     while files:
         file_name = files.pop()
-        data = json.load(open("scrapedData/" + file_name))
+        data = json.load(open(INTIAL_DIRECTORY + file_name))
         try:
             if nodes:
                 upload_node(data)
@@ -32,7 +34,7 @@ def upload_many(files, nodes=True):
             files.append(file_name)
         else:
             if not nodes:
-                os.rename("scrapedData/"+file_name, "uploadedData/"+file_name)
+                os.rename(INTIAL_DIRECTORY+file_name, FINAL_DIRECTORY+file_name)
 
 def upload_many_nodes(files):
     upload_many(files, nodes=True)
