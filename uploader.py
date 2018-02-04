@@ -3,8 +3,8 @@ from neo4j.v1 import GraphDatabase
 from multiprocessing.dummy import Pool as ThreadPool
 
 NUMBER_OF_THREADS = 5
-INTIAL_DIRECTORY = "scrapedData"
-FINAL_DIRECTORY = "uploadedData"
+INTIAL_DIRECTORY = "scrapedData/"
+FINAL_DIRECTORY = "uploadedData/"
 
 def heaper(num_of_heaps):
     heaps = []
@@ -54,7 +54,7 @@ def upload_node(data):
         if preexisting_full.peek()[0] != None:   # pageid already in graph
             # note that there is another url
             replaced_urls[url] = preexisting_full.peek()[0]["url"]
-            print("%s (id: %s) already exists in graph" % (title, pageid))
+            print("%s (id: %s) already exists in graph" % (title.encode('utf-8'), pageid))
             return
 
         escaped_title = title.replace("'", "`")

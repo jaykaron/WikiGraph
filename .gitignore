@@ -3,6 +3,7 @@ scrapedData*
 wikiSpider/crawls
 uploadedData*
 replaced_urls.pckl
+log.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
