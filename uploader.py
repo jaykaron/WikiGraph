@@ -1,37 +1,47 @@
 import sys, os, pickle, json, time
-import data_uploader
 from neo4j.v1 import GraphDatabase
 from multiprocessing.dummy import Pool as ThreadPool
 
 NUMBER_OF_THREADS = 5
 
-def sort_files(n_of_piles):
-    sorted_files = []
-    for i in range(n_of_piles):
-        sorted_files.append([])
+def heaper(num_of_heaps):
+    heaps = []
+    for i in range(num_of_heaps):
+        heaps.append([])
 
     files = os.listdir("scrapedData/")
-    for file_name in files:
-        if file_name[0] != "<":
-            continue
-        number = int(file_name[1])
-        sorted_files[number].append(file_name)
-    return sorted_files
+    files.remove("__stats__.txt")
 
-def upload_many(files):
+    for i in range(len(files)):
+        heaps[i % num_of_heaps].append(files[i])
+
+    return heaps
+
+def upload_many(files, nodes=True):
     while files:
         file_name = files.pop()
         data = json.load(open("scrapedData/" + file_name))
         try:
-            upload(data)
+            if nodes:
+                upload_node(data)
+            else:
+                upload_links(data)
         except Exception as e:
             print("Error on file %s" % file_name)
             print(e)
+            files.append(file_name)
         else:
-            # delete file
-            pass
+            if not nodes:
+                os.rename("scrapedData/"+file_name, "uploadedData/"+file_name)
 
-def upload(data):
+def upload_many_nodes(files):
+    upload_many(files, nodes=True)
+
+def upload_many_links(files):
+    upload_many(files, nodes=False)
+
+
+def upload_node(data):
     pageid = data["pageid"]
     url = data["url"]
     title = data["title"]
@@ -45,14 +55,22 @@ def upload(data):
             print("%s (id: %s) already exists in graph" % (title, pageid))
             return
 
-        for i in range(len(links)):
-            try:
-                links[i] = replaced_urls[links[i]]
-            except Exception as e:
-                pass
+        escaped_title = title.replace("'", "`")
+        add_root = session.run("MERGE (n:P {url:'%s'}) SET n.id = %s SET n.title = '%s'" % (url, pageid, escaped_title))
 
-        escaped_title = escape_single_quotes(title)
-        root = session.run("MERGE (n:P {url:'%s'}) SET n.id = %s SET n.title = '%s' RETURN n" % (url, pageid, escaped_title))
+def upload_links(data):
+    pageid = data["pageid"]
+    url = data["url"]
+    title = data["title"]
+    links = data["links"]
+
+    for i in range(len(links)):
+        try:
+            links[i] = replaced_urls[links[i]]
+        except Exception as e:
+            pass
+
+    with driver.session() as session:
         add_links = session.run(""" OPTIONAL MATCH (root:P {id:%s})
                                 WITH root, %s AS urls
                                 UNWIND urls AS u
@@ -60,34 +78,31 @@ def upload(data):
                                 merge (root)-[:L]->(n)
                                 """ % (pageid, links))
 
-def escape_single_quotes(title):
-    """ a recursive method to replace single quotes (') with escaped ones (\')"""
-
-    loc = title.find("'")
-
-    # base case, no quotes
-    if loc == -1:
-        return title
-
-    # recursive, replace with \' and recurse on end of string
-    return title[0:loc] + "\\'" + Uploader.escape_single_quotes(title[loc + 1:])
-
 start_time = time.time()
 
 replaced_urls = {}      # for pages with multiple urls
 try:
-    replaced_urls = pickle.load(open("replaced_urls.p", "rb"))
+    replaced_urls = pickle.load(open("replaced_urls.pckl", "rb"))
 except Exception as e:
     pass
 
 uri = "bolt://localhost:7687"
 driver = GraphDatabase.driver(uri, auth=("neo4j", "Wiki"))
 
-sorted_files = sort_files(NUMBER_OF_THREADS)
+heaps = heaper(NUMBER_OF_THREADS)
 
 pool = ThreadPool(NUMBER_OF_THREADS)
 
-pool.map(upload_many, sorted_files)
+pool.map(upload_many_nodes, heaps)
 
 total_time = time.time() - start_time
-print("Total time: %s seconds" % total_time)
+print("Node upload time: %s seconds" % total_time)
+
+# start_time = time.time()
+# pool.map(upload_many_links, heaps)
+#
+# total_time = time.time() - start_time
+# print("Link upload time: %s seconds" % total_time)
+
+with open("replaced_urls.pckl", "wb") as f:
+    pickle.dump(replaced_urls, f)
