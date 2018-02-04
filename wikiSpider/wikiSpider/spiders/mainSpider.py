@@ -83,8 +83,9 @@ class mainSpider(scrapy.Spider):
         }
 
         # save file by id
-        uploader_number = title.__hash__() % self.NUMBER_OF_UPLOADERS
-        filename = self.results_dir + '/<%d>%s.json' % (uploader_number, url[6:])
+        url_end = url[6:]
+        url_end = url_end.replace("/", "|")
+        filename = self.results_dir + '/%s.json' % url_end
         with open(filename, 'w') as f:
             json.dump(data, f)
 
