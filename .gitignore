@@ -1,6 +1,8 @@
 testing.py
 scrapedData*
 wikiSpider/crawls
+uploadedData*
+replaced_urls.pckl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

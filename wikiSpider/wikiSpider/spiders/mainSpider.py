@@ -4,10 +4,11 @@ import pickle
 import time
 
 
-class linkSpider(scrapy.Spider):
+class mainSpider(scrapy.Spider):
     name = "main"
     results_dir = "../scrapedData"
     start_time = time.time()
+    NUMBER_OF_UPLOADERS = 5
     custom_settings = {
         "DEPTH_LIMIT": 0,
 
